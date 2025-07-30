@@ -3,7 +3,9 @@
 Plugin Name: Sticky Video Widget
 Description: Добавляет на сайт настраиваемый плавающий видео-виджет с возможностью выбора видео из медиатеки, настройкой позиции, текста кнопки и других параметров.
 Version: 1.1.0
-Author: Dmitry Dodonov
+Author: Mitroliti
+Author URI: https://mitroliti.com
+Plugin URI: https://mitroliti.com/plugins/sticky-video-widget
 Text Domain: sticky-video-widget
 Domain Path: /languages
 */
@@ -17,6 +19,38 @@ function svw_init() {
     load_plugin_textdomain('sticky-video-widget', false, dirname(plugin_basename(__FILE__)) . '/languages');
 }
 add_action('plugins_loaded', 'svw_init');
+
+// Добавляем ссылку "Настройки" на странице плагинов
+function svw_add_settings_link($links) {
+    $settings_link = '<a href="' . admin_url('options-general.php?page=sticky-video-widget') . '">' . __('Настройки', 'sticky-video-widget') . '</a>';
+    array_unshift($links, $settings_link);
+    return $links;
+}
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'svw_add_settings_link');
+
+// Уведомление после активации плагина
+function svw_activation_notice() {
+    if (get_transient('svw_activation_notice')) {
+        ?>
+        <div class="notice notice-success is-dismissible">
+            <p>
+                <?php _e('Спасибо за установку Sticky Video Widget!', 'sticky-video-widget'); ?> 
+                <a href="<?php echo admin_url('options-general.php?page=sticky-video-widget'); ?>">
+                    <?php _e('Настройте плагин сейчас', 'sticky-video-widget'); ?>
+                </a>
+            </p>
+        </div>
+        <?php
+        delete_transient('svw_activation_notice');
+    }
+}
+add_action('admin_notices', 'svw_activation_notice');
+
+// Устанавливаем транзиент при активации
+function svw_activate_plugin() {
+    set_transient('svw_activation_notice', true, 30);
+}
+register_activation_hook(__FILE__, 'svw_activate_plugin');
 
 // Подключение скриптов/стилей
 function svw_enqueue_scripts($hook) {
@@ -241,6 +275,11 @@ function svw_render_settings_page() {
                 </ol>
                 
                 <p><strong><?php _e('Совет:', 'sticky-video-widget'); ?></strong> <?php _e('Используйте короткие видео (до 30 секунд) для лучшего пользовательского опыта.', 'sticky-video-widget'); ?></p>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px;">
+                    <p><?php _e('Разработано', 'sticky-video-widget'); ?> <a href="https://mitroliti.com" target="_blank" style="color: #0073aa; text-decoration: none;"><strong>Mitroliti</strong></a></p>
+                    <p><a href="https://mitroliti.com/plugins" target="_blank" style="color: #0073aa; text-decoration: none;"><?php _e('Больше полезных плагинов', 'sticky-video-widget'); ?></a></p>
+                </div>
             </div>
         </div>
     </div>

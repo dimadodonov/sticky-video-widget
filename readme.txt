@@ -1,5 +1,5 @@
 === Sticky Video Widget ===
-Contributors:      dodonov
+Contributors:      mitroliti
 Tags:              video, widget, sticky, floating, promo, call-to-action, customizable
 Requires at least: 5.5
 Tested up to: 6.5.3
