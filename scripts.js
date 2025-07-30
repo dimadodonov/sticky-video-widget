@@ -8,23 +8,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const button = widget.querySelector(".video-widget__button");
 
   // Проверяем, есть ли автозапуск
-  const hasAutoplay = video.hasAttribute('autoplay');
+  const hasAutoplay = video.hasAttribute("autoplay");
 
   function open() {
     widget.setAttribute("data-state", "opened");
     video.currentTime = 0;
     video.muted = false;
-    
+
     // Если видео не имеет автозапуска, запускаем его при открытии
     if (!hasAutoplay) {
-      video.play().catch(e => console.log('Autoplay prevented:', e));
+      video.play().catch((e) => console.log("Autoplay prevented:", e));
     }
   }
 
   function closeWidget() {
     widget.setAttribute("data-state", "default");
     video.muted = true;
-    
+
     // Если видео не имеет автозапуска, ставим на паузу
     if (!hasAutoplay) {
       video.pause();
@@ -72,13 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Обработка ошибок видео
-  video.addEventListener('error', (e) => {
-    console.error('Video error:', e);
-    widget.style.display = 'none';
+  video.addEventListener("error", (e) => {
+    console.error("Video error:", e);
+    widget.style.display = "none";
   });
 
   // Плавное появление виджета
   setTimeout(() => {
-    widget.style.opacity = '1';
+    widget.style.opacity = "1";
   }, 500);
 });

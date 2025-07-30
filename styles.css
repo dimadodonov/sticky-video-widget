@@ -2,7 +2,8 @@
 .video-widget {
   position: fixed;
   z-index: 999999;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
 }
@@ -188,7 +189,7 @@
   .video-widget__close {
     opacity: 0.5;
   }
-  
+
   .video-widget.svw-hide-mobile {
     display: none !important;
   }
@@ -203,7 +204,7 @@
     width: 90px;
     height: 125px;
   }
-  
+
   .video-widget.svw-top-left .video-widget__container,
   .video-widget.svw-top-right .video-widget__container {
     left: 15px;
