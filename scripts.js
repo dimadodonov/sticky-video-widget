@@ -46,6 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Скрываем виджет полностью
   function hideWidget() {
+    // Останавливаем видео и сбрасываем время
+    video.pause();
+    video.currentTime = 0;
+    video.muted = true;
+    
     widget.style.display = "none";
     saveClosedState();
   }
@@ -63,12 +68,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeWidget() {
     widget.setAttribute("data-state", "default");
+    
+    // Останавливаем видео и сбрасываем время
+    video.pause();
+    video.currentTime = 0;
     video.muted = true;
-
-    // Если видео не имеет автозапуска, ставим на паузу
-    if (!hasAutoplay) {
-      video.pause();
-    }
   }
 
   function toggleWidget() {
@@ -135,6 +139,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Показываем виджет и делаем его видимым
+    widget.style.display = "block";
+    widget.style.visibility = "visible";
+    
     // Плавное появление виджета
     setTimeout(() => {
       widget.style.opacity = "1";

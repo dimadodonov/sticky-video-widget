@@ -61,8 +61,7 @@ function svw_enqueue_scripts($hook) {
         
         // Передаем настройки в JavaScript
         $settings = array(
-            'autoplay' => get_option('svw_autoplay', '1'),
-            'position' => get_option('svw_widget_position', 'bottom-left')
+            'autoplay' => get_option('svw_autoplay', '1')
         );
         wp_localize_script('svw_scripts', 'svwSettings', $settings);
     }
@@ -86,7 +85,7 @@ function svw_register_settings() {
     register_setting('svw_settings_group', 'svw_video_url');
     register_setting('svw_settings_group', 'svw_button_text');
     register_setting('svw_settings_group', 'svw_button_link');
-    register_setting('svw_settings_group', 'svw_widget_position');
+
     register_setting('svw_settings_group', 'svw_widget_enabled');
     register_setting('svw_settings_group', 'svw_show_on_mobile');
     register_setting('svw_settings_group', 'svw_autoplay');
@@ -114,13 +113,7 @@ function svw_register_settings() {
         'svw_section_main'
     );
 
-    add_settings_field(
-        'svw_widget_position',
-        __('Позиция виджета', 'sticky-video-widget'),
-        'svw_render_position_field',
-        'sticky-video-widget',
-        'svw_section_main'
-    );
+
 
     add_settings_field(
         'svw_button_text',
@@ -178,25 +171,7 @@ function svw_render_video_field() {
     <?php
 }
 
-// Поле позиции виджета
-function svw_render_position_field() {
-    $value = get_option('svw_widget_position', 'bottom-left');
-    $positions = array(
-        'bottom-left' => __('Внизу слева', 'sticky-video-widget'),
-        'bottom-right' => __('Внизу справа', 'sticky-video-widget'),
-        'top-left' => __('Вверху слева', 'sticky-video-widget'),
-        'top-right' => __('Вверху справа', 'sticky-video-widget')
-    );
-    ?>
-    <select id="svw_widget_position" name="svw_widget_position">
-        <?php foreach ($positions as $key => $label): ?>
-            <option value="<?php echo esc_attr($key); ?>" <?php selected($value, $key); ?>>
-                <?php echo esc_html($label); ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-    <?php
-}
+
 
 // Поле текста кнопки
 function svw_render_button_text_field() {
@@ -303,13 +278,12 @@ function svw_render_settings_page() {
                 
                 <div class="svw-instructions">
                     <h4><?php _e('Инструкция:', 'sticky-video-widget'); ?></h4>
-                    <ol>
-                        <li><?php _e('Включите виджет', 'sticky-video-widget'); ?></li>
-                        <li><?php _e('Выберите видео из медиатеки', 'sticky-video-widget'); ?></li>
-                        <li><?php _e('Настройте позицию и внешний вид', 'sticky-video-widget'); ?></li>
-                        <li><?php _e('Укажите текст и ссылку для кнопки', 'sticky-video-widget'); ?></li>
-                        <li><?php _e('Сохраните настройки', 'sticky-video-widget'); ?></li>
-                    </ol>
+                                         <ol>
+                         <li><?php _e('Включите виджет', 'sticky-video-widget'); ?></li>
+                         <li><?php _e('Выберите видео из медиатеки', 'sticky-video-widget'); ?></li>
+                         <li><?php _e('Укажите текст и ссылку для кнопки', 'sticky-video-widget'); ?></li>
+                         <li><?php _e('Сохраните настройки', 'sticky-video-widget'); ?></li>
+                     </ol>
                     
                     <p><strong><?php _e('Совет:', 'sticky-video-widget'); ?></strong> <?php _e('Используйте короткие видео (до 30 секунд) для лучшего пользовательского опыта.', 'sticky-video-widget'); ?></p>
                     
@@ -330,7 +304,6 @@ function svw_render_settings_page() {
         // Обновление превью в реальном времени
         function updatePreview() {
             const enabled = $('#svw_widget_enabled').is(':checked');
-            const position = $('#svw_widget_position').val() || 'bottom-left';
             const buttonText = $('#svw_button_text').val() || '<?php _e('Получить КП', 'sticky-video-widget'); ?>';
             const videoUrl = $('#svw_video_url').val();
             
@@ -344,10 +317,6 @@ function svw_render_settings_page() {
             } else {
                 widget.hide();
             }
-            
-            // Обновить позицию
-            widget.removeClass('svw-pos-top-left svw-pos-top-right svw-pos-bottom-left svw-pos-bottom-right')
-                  .addClass('svw-pos-' + position);
             
             // Обновить текст кнопки
             $('#svw-preview-button-text').text(buttonText);
@@ -375,7 +344,7 @@ function svw_render_settings_page() {
         window.updateSVWPreview = updatePreview;
         
         // Слушатели изменений
-        $('#svw_widget_enabled, #svw_widget_position, #svw_button_text, #svw_video_url').on('change input', updatePreview);
+        $('#svw_widget_enabled, #svw_button_text, #svw_video_url').on('change input', updatePreview);
         
         // Кнопка демо - переключает состояние виджета (открыть/закрыть)
         $('#svw-preview-demo').click(function() {
@@ -410,10 +379,6 @@ function svw_render_settings_page() {
                 videoElement[0].muted = true;
                 videoElement[0].currentTime = 0;
             }
-            
-            // Сбрасываем позицию к исходной
-            widget.removeClass('svw-pos-top-left svw-pos-top-right svw-pos-bottom-left svw-pos-bottom-right')
-                  .addClass('svw-pos-bottom-left');
             
             // Обновляем превью
             updatePreview();
@@ -525,25 +490,10 @@ function svw_render_settings_page() {
             transform: scale(1.1);
         }
         
-        /* Позиции виджета - как в реальном виджете */
-        .svw-preview-widget.svw-pos-top-left {
-            top: 50px;
-            left: 50px;
-        }
-        
-        .svw-preview-widget.svw-pos-top-right {
-            top: 50px;
-            right: 50px;
-        }
-        
-        .svw-preview-widget.svw-pos-bottom-left {
+        /* Позиция виджета - фиксированная внизу слева */
+        .svw-preview-widget {
             bottom: 50px;
             left: 50px;
-        }
-        
-        .svw-preview-widget.svw-pos-bottom-right {
-            bottom: 50px;
-            right: 50px;
         }
         
         .svw-preview-video {
@@ -724,27 +674,18 @@ function svw_render_settings_page() {
         }
         
         @media only screen and (max-width: 479px) {
-            .svw-preview-widget.svw-pos-bottom-left,
-            .svw-preview-widget.svw-pos-bottom-right {
+            .svw-preview-widget {
                 left: 15px !important;
-                right: auto !important;
                 bottom: 15px !important;
                 width: 90px;
                 height: 125px;
             }
             
-            .svw-preview-widget.svw-pos-top-left,
-            .svw-preview-widget.svw-pos-top-right {
-                left: 15px !important;
-                right: auto !important;
-                top: 15px !important;
-                width: 90px;
-                height: 125px;
-            }
-            
             .svw-preview-widget.svw-preview-opened {
-                width: 200px !important;
-                height: 300px !important;
+                width: 280px !important;
+                height: 500px !important;
+                left: 15px !important;
+                bottom: 15px !important;
             }
         }
         
@@ -773,20 +714,16 @@ function svw_render_frontend_widget() {
     }
 
     // Получаем настройки
-    $position = get_option('svw_widget_position', 'bottom-left');
     $button_text = get_option('svw_button_text', 'Получить КП');
     $button_link = get_option('svw_button_link', '#section-price');
     $show_on_mobile = get_option('svw_show_on_mobile', '1');
     $autoplay = get_option('svw_autoplay', '1');
 
-    // CSS класс для позиции
-    $position_class = 'svw-' . $position;
-    
     // CSS класс для мобильных устройств
     $mobile_class = $show_on_mobile ? '' : 'svw-hide-mobile';
     
     ?>
-    <div class="video-widget <?php echo esc_attr($position_class . ' ' . $mobile_class); ?>" data-state="default">
+    <div class="video-widget <?php echo esc_attr($mobile_class); ?>" data-state="default">
         <div class="video-widget__container">
             <video id="video-widget__video" 
                    loop 
@@ -814,7 +751,7 @@ function svw_deactivate_plugin() {
     delete_option('svw_video_url');
     delete_option('svw_button_text');
     delete_option('svw_button_link');
-    delete_option('svw_widget_position');
+
     delete_option('svw_widget_enabled');
     delete_option('svw_show_on_mobile');
     delete_option('svw_autoplay');
