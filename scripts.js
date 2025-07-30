@@ -9,26 +9,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Проверяем, есть ли автозапуск
   const hasAutoplay = video.hasAttribute("autoplay");
-  
+
   // Ключ для localStorage
-  const STORAGE_KEY = 'svw_widget_closed';
+  const STORAGE_KEY = "svw_widget_closed";
   const STORAGE_DURATION = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
 
   // Проверяем, был ли виджет закрыт ранее
   function isWidgetClosed() {
     const closedData = localStorage.getItem(STORAGE_KEY);
     if (!closedData) return false;
-    
+
     try {
       const { timestamp } = JSON.parse(closedData);
       const now = Date.now();
-      
+
       // Если прошло больше 24 часов, показываем виджет снова
       if (now - timestamp > STORAGE_DURATION) {
         localStorage.removeItem(STORAGE_KEY);
         return false;
       }
-      
+
       return true;
     } catch (e) {
       localStorage.removeItem(STORAGE_KEY);
@@ -39,14 +39,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Сохраняем состояние закрытия
   function saveClosedState() {
     const data = {
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }
 
   // Скрываем виджет полностью
   function hideWidget() {
-    widget.style.display = 'none';
+    widget.style.display = "none";
     saveClosedState();
   }
 
@@ -85,8 +85,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   container.addEventListener("click", (e) => {
     // Не срабатывает, если кликнули по кнопке или кнопке закрытия
-    if (e.target === button || button.contains(e.target) || 
-        e.target === close || close.contains(e.target)) {
+    if (
+      e.target === button ||
+      button.contains(e.target) ||
+      e.target === close ||
+      close.contains(e.target)
+    ) {
       return;
     }
     toggleWidget();
@@ -95,8 +99,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Для тачскринов
   if (window.innerWidth > 1024) {
     container.addEventListener("touchstart", (e) => {
-      if (e.target === button || button.contains(e.target) || 
-          e.target === close || close.contains(e.target)) {
+      if (
+        e.target === button ||
+        button.contains(e.target) ||
+        e.target === close ||
+        close.contains(e.target)
+      ) {
         return;
       }
       toggleWidget();
@@ -123,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function initWidget() {
     // Проверяем, был ли виджет закрыт ранее
     if (isWidgetClosed()) {
-      widget.style.display = 'none';
+      widget.style.display = "none";
       return;
     }
 

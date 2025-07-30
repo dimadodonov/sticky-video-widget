@@ -281,6 +281,8 @@ function svw_render_settings_page() {
                                     <span class="dashicons dashicons-video-alt3"></span>
                                     <span><?php _e('Видео', 'sticky-video-widget'); ?></span>
                                 </div>
+                                <video id="svw-preview-video-element" class="svw-preview-video-real" loop muted playsinline style="display: none;">
+                                </video>
                             </div>
                             <div class="svw-preview-button">
                                 <span id="svw-preview-button-text"><?php _e('Получить КП', 'sticky-video-widget'); ?></span>
@@ -291,13 +293,10 @@ function svw_render_settings_page() {
                     
                     <div class="svw-preview-controls">
                         <button type="button" id="svw-preview-demo" class="button button-secondary">
-                            <?php _e('🎭 Демо взаимодействия', 'sticky-video-widget'); ?>
+                            <?php _e('� Открыть/Закрыть виджет', 'sticky-video-widget'); ?>
                         </button>
                         <button type="button" id="svw-preview-reset" class="button">
-                            <?php _e('🔄 Сбросить превью', 'sticky-video-widget'); ?>
-                        </button>
-                        <button type="button" id="svw-clear-storage" class="button button-primary">
-                            <?php _e('🗑️ Сбросить localStorage', 'sticky-video-widget'); ?>
+                            <?php _e('🔄 Свернуть виджет', 'sticky-video-widget'); ?>
                         </button>
                     </div>
                 </div>
@@ -314,7 +313,7 @@ function svw_render_settings_page() {
                     
                     <p><strong><?php _e('Совет:', 'sticky-video-widget'); ?></strong> <?php _e('Используйте короткие видео (до 30 секунд) для лучшего пользовательского опыта.', 'sticky-video-widget'); ?></p>
                     
-                    <p><strong><?php _e('Важно:', 'sticky-video-widget'); ?></strong> <?php _e('Кнопка действия показывается только когда виджет раскрыт. При нажатии на ❌ виджет скрывается на 24 часа.', 'sticky-video-widget'); ?></p>
+                    <p><strong><?php _e('Превью:', 'sticky-video-widget'); ?></strong> <?php _e('Превью точно копирует поведение виджета. Кликните по видео для раскрытия, по ❌ для закрытия (восстановится через 2 сек).', 'sticky-video-widget'); ?></p>
                 </div>
                 
                 <div class="svw-author-info">
@@ -337,6 +336,7 @@ function svw_render_settings_page() {
             
             const widget = $('#svw-preview-widget');
             const placeholder = $('.svw-preview-video-placeholder');
+            const videoElement = $('#svw-preview-video-element');
             
             // Показать/скрыть виджет
             if (enabled) {
@@ -352,11 +352,20 @@ function svw_render_settings_page() {
             // Обновить текст кнопки
             $('#svw-preview-button-text').text(buttonText);
             
-            // Обновить индикатор видео
+            // Обновить видео/заглушку
             if (videoUrl) {
-                placeholder.html('<span class="dashicons dashicons-yes-alt"></span><span><?php _e('Видео выбрано', 'sticky-video-widget'); ?></span>');
-                placeholder.css('color', '#46b450');
+                // Показываем реальное видео
+                videoElement.attr('src', videoUrl);
+                videoElement.show();
+                placeholder.hide();
+                
+                // Запускаем видео при загрузке
+                videoElement[0].load();
+                videoElement[0].play().catch(e => console.log('Preview autoplay prevented:', e));
             } else {
+                // Показываем заглушку
+                videoElement.hide();
+                placeholder.show();
                 placeholder.html('<span class="dashicons dashicons-video-alt3"></span><span><?php _e('Выберите видео', 'sticky-video-widget'); ?></span>');
                 placeholder.css('color', '#666');
             }
@@ -368,30 +377,56 @@ function svw_render_settings_page() {
         // Слушатели изменений
         $('#svw_widget_enabled, #svw_widget_position, #svw_button_text, #svw_video_url').on('change input', updatePreview);
         
-        // Демо взаимодействия
+        // Демо взаимодействия - точно как на реальном сайте
         $('#svw-preview-demo').click(function() {
             const widget = $('#svw-preview-widget');
-            widget.addClass('svw-preview-opened');
+            const videoElement = $('#svw-preview-video-element');
             
-            setTimeout(() => {
+            if (widget.hasClass('svw-preview-opened')) {
+                // Закрываем виджет
                 widget.removeClass('svw-preview-opened');
-            }, 3000);
+                if (videoElement[0] && videoElement[0].src) {
+                    videoElement[0].muted = true;
+                }
+            } else {
+                // Открываем виджет
+                widget.addClass('svw-preview-opened');
+                if (videoElement[0] && videoElement[0].src) {
+                    videoElement[0].currentTime = 0;
+                    videoElement[0].muted = false;
+                    videoElement[0].play().catch(e => console.log('Preview play prevented:', e));
+                }
+            }
         });
         
         // Сброс превью
         $('#svw-preview-reset').click(function() {
-            $('#svw-preview-widget').removeClass('svw-preview-opened');
+            const widget = $('#svw-preview-widget');
+            const videoElement = $('#svw-preview-video-element');
+            
+            widget.removeClass('svw-preview-opened');
+            if (videoElement[0] && videoElement[0].src) {
+                videoElement[0].muted = true;
+            }
         });
         
-        // Сброс localStorage для виджета
-        $('#svw-clear-storage').click(function() {
-            if (confirm('<?php _e('Очистить сохранённое состояние закрытия виджета? Виджет снова будет показываться всем пользователям.', 'sticky-video-widget'); ?>')) {
-                // Очищаем localStorage для всех пользователей через JS
-                alert('<?php _e('Добавьте этот код в консоль браузера для очистки localStorage пользователей:\nlocalStorage.removeItem("svw_widget_closed");', 'sticky-video-widget'); ?>');
-                
-                // Для превью сбрасываем состояние
-                $('#svw-preview-widget').show().removeClass('svw-preview-opened');
-            }
+        // Клик по превью виджета - работает как настоящий
+        $('#svw-preview-widget .svw-preview-video').click(function(e) {
+            e.preventDefault();
+            $('#svw-preview-demo').click();
+        });
+        
+        // Кнопка закрытия в превью
+        $('#svw-preview-widget .svw-preview-close').click(function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const widget = $('#svw-preview-widget');
+            widget.hide();
+            
+            // Через 2 секунды показываем снова для демонстрации
+            setTimeout(() => {
+                widget.show().removeClass('svw-preview-opened');
+            }, 2000);
         });
         
         // Инициализация
@@ -427,7 +462,7 @@ function svw_render_settings_page() {
             position: relative;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 8px;
-            height: 300px;
+            height: 600px;
             overflow: hidden;
             margin-bottom: 15px;
         }
@@ -452,53 +487,60 @@ function svw_render_settings_page() {
         
         .svw-preview-widget {
             position: absolute;
-            width: 80px;
-            height: 100px;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            width: 130px;
+            height: 180px;
+            background: rgb(238, 238, 238);
+            border: 5px solid rgb(255, 255, 255);
+            border-radius: 20px;
+            box-shadow: rgba(0, 0, 0, 0.2) 0px 10px 20px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: width 0.3s ease-in-out, height 0.3s ease-in-out, 
+                       border-color 0.2s ease-in-out, transform 0.2s ease-in-out;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+            box-sizing: border-box;
+            user-select: none;
         }
         
         .svw-preview-widget:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+            transform: scale(1.05) translate(5px, -5px);
+            border-color: rgb(19, 19, 68);
         }
         
         .svw-preview-widget.svw-preview-opened {
-            width: 160px;
-            height: 200px;
+            width: 280px;
+            height: 500px;
+            border-radius: 20px;
+            border-color: rgb(255, 255, 255);
             transform: scale(1.1);
         }
         
-        /* Позиции виджета */
+        /* Позиции виджета - как в реальном виджете */
         .svw-preview-widget.svw-pos-top-left {
-            top: 15px;
-            left: 15px;
+            top: 50px;
+            left: 50px;
         }
         
         .svw-preview-widget.svw-pos-top-right {
-            top: 15px;
-            right: 15px;
+            top: 50px;
+            right: 50px;
         }
         
         .svw-preview-widget.svw-pos-bottom-left {
-            bottom: 15px;
-            left: 15px;
+            bottom: 50px;
+            left: 50px;
         }
         
         .svw-preview-widget.svw-pos-bottom-right {
-            bottom: 15px;
-            right: 15px;
+            bottom: 50px;
+            right: 50px;
         }
         
         .svw-preview-video {
             flex: 1;
             background: #000;
-            border-radius: 8px 8px 0 0;
+            border-radius: 15px 15px 0 0;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -511,30 +553,59 @@ function svw_render_settings_page() {
             flex-direction: column;
             align-items: center;
             color: #666;
-            font-size: 10px;
+            font-size: 14px;
             text-align: center;
         }
         
         .svw-preview-video-placeholder .dashicons {
-            font-size: 20px;
-            margin-bottom: 2px;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .svw-preview-video-real {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+            z-index: 200;
+            transition: opacity 0.4s ease-in-out;
+            opacity: 0.8;
         }
         
         .svw-preview-button {
-            background: #fdd82a;
-            color: #000;
-            padding: 8px 12px;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            left: 20px;
+            height: 65px;
+            border-radius: 10px;
+            z-index: 300;
+            box-shadow: rgba(0, 0, 0, 0.25) 0px 4px 15px;
             text-align: center;
-            font-size: 10px;
-            font-weight: 600;
-            border-radius: 0 0 8px 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-transform: uppercase;
+            transition: opacity 0.3s ease-in-out, background-color 0.2s ease-in-out,
+                       transform 0.2s ease-in-out, visibility 0.3s ease-in-out;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            background-color: rgb(253, 216, 42);
+            font-size: 14px;
+            font-family: Helvetica;
+            color: #000000;
+            vertical-align: middle;
+            line-height: 65px;
+            text-transform: uppercase;
+            font-weight: normal;
+            text-decoration: none;
+            display: block;
+        }
+        
+        .svw-preview-button:hover {
+            background-color: rgb(255, 226, 87);
+            text-decoration: none;
         }
         
         .svw-preview-widget.svw-preview-opened .svw-preview-button {
@@ -544,22 +615,56 @@ function svw_render_settings_page() {
         
         .svw-preview-close {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(0,0,0,0.5);
-            color: white;
+            top: 6px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
+            z-index: 250;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out, transform 0.3s ease-in-out;
+            background: none;
             border: none;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
             cursor: pointer;
-            font-size: 12px;
-            line-height: 1;
-            display: none;
+        }
+        
+        .svw-preview-close:before,
+        .svw-preview-close:after {
+            position: absolute;
+            left: 9px;
+            top: 1px;
+            content: " ";
+            height: 18px;
+            width: 2px;
+            background: white;
+            box-shadow: rgba(0, 0, 0, 0.5) 1px 1px 10px;
+        }
+        
+        .svw-preview-close:before {
+            transform: rotate(45deg);
+        }
+        
+        .svw-preview-close:after {
+            transform: rotate(-45deg);
+        }
+        
+        .svw-preview-widget:hover .svw-preview-close {
+            opacity: 0.5;
         }
         
         .svw-preview-widget.svw-preview-opened .svw-preview-close {
-            display: block;
+            opacity: 0.5;
+        }
+        
+        .svw-preview-widget.svw-preview-opened .svw-preview-close:before {
+            display: none;
+        }
+        
+        .svw-preview-widget.svw-preview-opened .svw-preview-close:after {
+            transform: rotate(90deg);
+        }
+        
+        .svw-preview-widget.svw-preview-opened .svw-preview-close:hover {
+            opacity: 1;
         }
         
         .svw-preview-controls {
@@ -569,7 +674,8 @@ function svw_render_settings_page() {
         
         .svw-preview-controls button {
             margin: 0 5px;
-            font-size: 12px;
+            font-size: 13px;
+            padding: 8px 16px;
         }
         
         .svw-instructions {
@@ -598,6 +704,38 @@ function svw_render_settings_page() {
         @media (max-width: 1200px) {
             .svw-admin-container {
                 flex-direction: column;
+            }
+        }
+        
+        /* Адаптивные стили для превью виджета - как в реальном */
+        @media only screen and (max-width: 1023px) {
+            .svw-preview-close {
+                opacity: 0.5;
+            }
+        }
+        
+        @media only screen and (max-width: 479px) {
+            .svw-preview-widget.svw-pos-bottom-left,
+            .svw-preview-widget.svw-pos-bottom-right {
+                left: 15px !important;
+                right: auto !important;
+                bottom: 15px !important;
+                width: 90px;
+                height: 125px;
+            }
+            
+            .svw-preview-widget.svw-pos-top-left,
+            .svw-preview-widget.svw-pos-top-right {
+                left: 15px !important;
+                right: auto !important;
+                top: 15px !important;
+                width: 90px;
+                height: 125px;
+            }
+            
+            .svw-preview-widget.svw-preview-opened {
+                width: 200px !important;
+                height: 300px !important;
             }
         }
         
