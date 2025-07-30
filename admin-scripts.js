@@ -1,6 +1,15 @@
 jQuery(document).ready(function ($) {
   let file_frame;
 
+  // Функция обновления превью (если существует)
+  function triggerPreviewUpdate() {
+    if (typeof window.updateSVWPreview === "function") {
+      window.updateSVWPreview();
+    }
+    // Также запускаем событие change для обновления превью
+    $("#svw_video_url").trigger("input");
+  }
+
   $("#svw_select_button").on("click", function (e) {
     e.preventDefault();
 
@@ -19,6 +28,9 @@ jQuery(document).ready(function ($) {
     file_frame.on("select", function () {
       const attachment = file_frame.state().get("selection").first().toJSON();
       $("#svw_video_url").val(attachment.url);
+
+      // Обновляем превью
+      triggerPreviewUpdate();
     });
 
     file_frame.open();
@@ -26,5 +38,8 @@ jQuery(document).ready(function ($) {
 
   $("#svw_clear_button").on("click", function () {
     $("#svw_video_url").val("");
+
+    // Обновляем превью
+    triggerPreviewUpdate();
   });
 });

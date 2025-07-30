@@ -161,7 +161,7 @@ function svw_render_enabled_field() {
     $value = get_option('svw_widget_enabled', '1');
     ?>
     <label>
-        <input type="checkbox" name="svw_widget_enabled" value="1" <?php checked($value, '1'); ?> />
+        <input type="checkbox" id="svw_widget_enabled" name="svw_widget_enabled" value="1" <?php checked($value, '1'); ?> />
         <?php _e('Включить отображение виджета на сайте', 'sticky-video-widget'); ?>
     </label>
     <?php
@@ -188,7 +188,7 @@ function svw_render_position_field() {
         'top-right' => __('Вверху справа', 'sticky-video-widget')
     );
     ?>
-    <select name="svw_widget_position">
+    <select id="svw_widget_position" name="svw_widget_position">
         <?php foreach ($positions as $key => $label): ?>
             <option value="<?php echo esc_attr($key); ?>" <?php selected($value, $key); ?>>
                 <?php echo esc_html($label); ?>
@@ -202,7 +202,7 @@ function svw_render_position_field() {
 function svw_render_button_text_field() {
     $value = get_option('svw_button_text', 'Получить КП');
     ?>
-    <input type="text" name="svw_button_text" value="<?php echo esc_attr($value); ?>" />
+    <input type="text" id="svw_button_text" name="svw_button_text" value="<?php echo esc_attr($value); ?>" />
     <p class="description"><?php _e('Текст, который будет отображаться на кнопке', 'sticky-video-widget'); ?></p>
     <?php
 }
@@ -250,8 +250,8 @@ function svw_render_settings_page() {
             </div>
         <?php endif; ?>
         
-        <div style="display: flex; gap: 20px;">
-            <div style="flex: 2;">
+        <div class="svw-admin-container">
+            <div class="svw-settings-section">
                 <form method="post" action="options.php">
                     <?php
                     settings_fields('svw_settings_group');
@@ -261,22 +261,58 @@ function svw_render_settings_page() {
                 </form>
             </div>
             
-            <div style="flex: 1; background: #fff; padding: 20px; border: 1px solid #ccd0d4; border-radius: 4px;">
-                <h3><?php _e('Предварительный просмотр', 'sticky-video-widget'); ?></h3>
-                <p><?php _e('Сохраните настройки и посетите любую страницу сайта, чтобы увидеть виджет в действии.', 'sticky-video-widget'); ?></p>
+            <div class="svw-preview-section">
+                <h3><?php _e('🎬 Предварительный просмотр', 'sticky-video-widget'); ?></h3>
+                <div class="svw-preview-container">
+                    <div class="svw-preview-screen">
+                        <div class="svw-preview-content">
+                            <h4><?php _e('Ваш сайт', 'sticky-video-widget'); ?></h4>
+                            <p><?php _e('Содержимое страницы...', 'sticky-video-widget'); ?></p>
+                            <div class="svw-preview-text">
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit...</p>
+                                <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Живой превью виджета -->
+                        <div id="svw-preview-widget" class="svw-preview-widget" data-position="bottom-left">
+                            <div class="svw-preview-video">
+                                <div class="svw-preview-video-placeholder">
+                                    <span class="dashicons dashicons-video-alt3"></span>
+                                    <span><?php _e('Видео', 'sticky-video-widget'); ?></span>
+                                </div>
+                            </div>
+                            <div class="svw-preview-button">
+                                <span id="svw-preview-button-text"><?php _e('Получить КП', 'sticky-video-widget'); ?></span>
+                            </div>
+                            <button class="svw-preview-close">&times;</button>
+                        </div>
+                    </div>
+                    
+                    <div class="svw-preview-controls">
+                        <button type="button" id="svw-preview-demo" class="button button-secondary">
+                            <?php _e('🎭 Демо взаимодействия', 'sticky-video-widget'); ?>
+                        </button>
+                        <button type="button" id="svw-preview-reset" class="button">
+                            <?php _e('🔄 Сбросить превью', 'sticky-video-widget'); ?>
+                        </button>
+                    </div>
+                </div>
                 
-                <h4><?php _e('Инструкция:', 'sticky-video-widget'); ?></h4>
-                <ol>
-                    <li><?php _e('Включите виджет', 'sticky-video-widget'); ?></li>
-                    <li><?php _e('Выберите видео из медиатеки', 'sticky-video-widget'); ?></li>
-                    <li><?php _e('Настройте позицию и внешний вид', 'sticky-video-widget'); ?></li>
-                    <li><?php _e('Укажите текст и ссылку для кнопки', 'sticky-video-widget'); ?></li>
-                    <li><?php _e('Сохраните настройки', 'sticky-video-widget'); ?></li>
-                </ol>
+                <div class="svw-instructions">
+                    <h4><?php _e('Инструкция:', 'sticky-video-widget'); ?></h4>
+                    <ol>
+                        <li><?php _e('Включите виджет', 'sticky-video-widget'); ?></li>
+                        <li><?php _e('Выберите видео из медиатеки', 'sticky-video-widget'); ?></li>
+                        <li><?php _e('Настройте позицию и внешний вид', 'sticky-video-widget'); ?></li>
+                        <li><?php _e('Укажите текст и ссылку для кнопки', 'sticky-video-widget'); ?></li>
+                        <li><?php _e('Сохраните настройки', 'sticky-video-widget'); ?></li>
+                    </ol>
+                    
+                    <p><strong><?php _e('Совет:', 'sticky-video-widget'); ?></strong> <?php _e('Используйте короткие видео (до 30 секунд) для лучшего пользовательского опыта.', 'sticky-video-widget'); ?></p>
+                </div>
                 
-                <p><strong><?php _e('Совет:', 'sticky-video-widget'); ?></strong> <?php _e('Используйте короткие видео (до 30 секунд) для лучшего пользовательского опыта.', 'sticky-video-widget'); ?></p>
-                
-                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; font-size: 12px;">
+                <div class="svw-author-info">
                     <p><?php _e('Разработано', 'sticky-video-widget'); ?> <a href="https://mitroliti.com" target="_blank" style="color: #0073aa; text-decoration: none;"><strong>Mitroliti</strong></a></p>
                     <p><a href="https://mitroliti.com/plugins" target="_blank" style="color: #0073aa; text-decoration: none;"><?php _e('Больше полезных плагинов', 'sticky-video-widget'); ?></a></p>
                 </div>
@@ -284,7 +320,263 @@ function svw_render_settings_page() {
         </div>
     </div>
     
+    
+    <script>
+    jQuery(document).ready(function($) {
+        // Обновление превью в реальном времени
+        function updatePreview() {
+            const enabled = $('#svw_widget_enabled').is(':checked');
+            const position = $('#svw_widget_position').val() || 'bottom-left';
+            const buttonText = $('#svw_button_text').val() || '<?php _e('Получить КП', 'sticky-video-widget'); ?>';
+            const videoUrl = $('#svw_video_url').val();
+            
+            const widget = $('#svw-preview-widget');
+            const placeholder = $('.svw-preview-video-placeholder');
+            
+            // Показать/скрыть виджет
+            if (enabled) {
+                widget.show();
+            } else {
+                widget.hide();
+            }
+            
+            // Обновить позицию
+            widget.removeClass('svw-pos-top-left svw-pos-top-right svw-pos-bottom-left svw-pos-bottom-right')
+                  .addClass('svw-pos-' + position);
+            
+            // Обновить текст кнопки
+            $('#svw-preview-button-text').text(buttonText);
+            
+            // Обновить индикатор видео
+            if (videoUrl) {
+                placeholder.html('<span class="dashicons dashicons-yes-alt"></span><span><?php _e('Видео выбрано', 'sticky-video-widget'); ?></span>');
+                placeholder.css('color', '#46b450');
+            } else {
+                placeholder.html('<span class="dashicons dashicons-video-alt3"></span><span><?php _e('Выберите видео', 'sticky-video-widget'); ?></span>');
+                placeholder.css('color', '#666');
+            }
+        }
+        
+        // Экспортируем функцию для использования в admin-scripts.js
+        window.updateSVWPreview = updatePreview;
+        
+        // Слушатели изменений
+        $('#svw_widget_enabled, #svw_widget_position, #svw_button_text, #svw_video_url').on('change input', updatePreview);
+        
+        // Демо взаимодействия
+        $('#svw-preview-demo').click(function() {
+            const widget = $('#svw-preview-widget');
+            widget.addClass('svw-preview-opened');
+            
+            setTimeout(() => {
+                widget.removeClass('svw-preview-opened');
+            }, 3000);
+        });
+        
+        // Сброс превью
+        $('#svw-preview-reset').click(function() {
+            $('#svw-preview-widget').removeClass('svw-preview-opened');
+        });
+        
+        // Инициализация
+        setTimeout(updatePreview, 100);
+    });
+    </script>
+    
     <style>
+        .svw-admin-container {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .svw-settings-section {
+            flex: 2;
+        }
+        
+        .svw-preview-section {
+            flex: 1;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ccd0d4;
+            border-radius: 4px;
+            box-shadow: 0 1px 1px rgba(0,0,0,.04);
+        }
+        
+        .svw-preview-container {
+            margin: 15px 0;
+        }
+        
+        .svw-preview-screen {
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            height: 300px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .svw-preview-content {
+            padding: 20px;
+            color: white;
+        }
+        
+        .svw-preview-content h4 {
+            margin: 0 0 10px 0;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .svw-preview-text {
+            margin-top: 15px;
+            opacity: 0.8;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .svw-preview-widget {
+            position: absolute;
+            width: 80px;
+            height: 100px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .svw-preview-widget:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.2);
+        }
+        
+        .svw-preview-widget.svw-preview-opened {
+            width: 160px;
+            height: 200px;
+            transform: scale(1.1);
+        }
+        
+        /* Позиции виджета */
+        .svw-preview-widget.svw-pos-top-left {
+            top: 15px;
+            left: 15px;
+        }
+        
+        .svw-preview-widget.svw-pos-top-right {
+            top: 15px;
+            right: 15px;
+        }
+        
+        .svw-preview-widget.svw-pos-bottom-left {
+            bottom: 15px;
+            left: 15px;
+        }
+        
+        .svw-preview-widget.svw-pos-bottom-right {
+            bottom: 15px;
+            right: 15px;
+        }
+        
+        .svw-preview-video {
+            flex: 1;
+            background: #000;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .svw-preview-video-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #666;
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .svw-preview-video-placeholder .dashicons {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+        
+        .svw-preview-button {
+            background: #fdd82a;
+            color: #000;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 0 0 8px 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+        }
+        
+        .svw-preview-close {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            font-size: 12px;
+            line-height: 1;
+            display: none;
+        }
+        
+        .svw-preview-widget.svw-preview-opened .svw-preview-close {
+            display: block;
+        }
+        
+        .svw-preview-controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .svw-preview-controls button {
+            margin: 0 5px;
+            font-size: 12px;
+        }
+        
+        .svw-instructions {
+            margin: 20px 0;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .svw-instructions h4 {
+            margin-top: 0;
+        }
+        
+        .svw-instructions ol {
+            font-size: 13px;
+        }
+        
+        .svw-author-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        @media (max-width: 1200px) {
+            .svw-admin-container {
+                flex-direction: column;
+            }
+        }
+        
         .form-table th {
             width: 200px;
         }
