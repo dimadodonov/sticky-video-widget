@@ -377,10 +377,11 @@ function svw_render_settings_page() {
         // Слушатели изменений
         $('#svw_widget_enabled, #svw_widget_position, #svw_button_text, #svw_video_url').on('change input', updatePreview);
         
-        // Демо взаимодействия - точно как на реальном сайте
-        $('#svw-preview-demo').click(function() {
+        // Универсальная кнопка переключения состояния
+        $('#svw-preview-toggle').click(function() {
             const widget = $('#svw-preview-widget');
             const videoElement = $('#svw-preview-video-element');
+            const toggleText = $('#svw-toggle-text');
             
             if (widget.hasClass('svw-preview-opened')) {
                 // Закрываем виджет
@@ -388,6 +389,7 @@ function svw_render_settings_page() {
                 if (videoElement[0] && videoElement[0].src) {
                     videoElement[0].muted = true;
                 }
+                toggleText.text('<?php _e('🎬 Открыть виджет', 'sticky-video-widget'); ?>');
             } else {
                 // Открываем виджет
                 widget.addClass('svw-preview-opened');
@@ -396,24 +398,14 @@ function svw_render_settings_page() {
                     videoElement[0].muted = false;
                     videoElement[0].play().catch(e => console.log('Preview play prevented:', e));
                 }
-            }
-        });
-        
-        // Сброс превью
-        $('#svw-preview-reset').click(function() {
-            const widget = $('#svw-preview-widget');
-            const videoElement = $('#svw-preview-video-element');
-            
-            widget.removeClass('svw-preview-opened');
-            if (videoElement[0] && videoElement[0].src) {
-                videoElement[0].muted = true;
+                toggleText.text('<?php _e('🔄 Закрыть виджет', 'sticky-video-widget'); ?>');
             }
         });
         
         // Клик по превью виджета - работает как настоящий
         $('#svw-preview-widget .svw-preview-video').click(function(e) {
             e.preventDefault();
-            $('#svw-preview-demo').click();
+            $('#svw-preview-toggle').click();
         });
         
         // Кнопка закрытия в превью
