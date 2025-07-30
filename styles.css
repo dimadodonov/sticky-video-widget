@@ -178,16 +178,8 @@
   }
 }
 
-/* Стили для планшетов */
-@media only screen and (min-width: 480px) and (max-width: 768px) {
-  .video-widget[data-state="opened"] .video-widget__container {
-    width: 400px;
-    height: 711px; /* 400 * 16/9 = 711px для формата 9:16 */
-    max-height: calc(100vh - 30px);
-  }
-}
-
-@media only screen and (width <= 479px) {
+/* Стили для мобильных устройств (до 768px) */
+@media only screen and (width <= 768px) {
   .video-widget__container {
     left: 15px;
     bottom: 15px;

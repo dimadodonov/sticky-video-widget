@@ -673,7 +673,7 @@ function svw_render_settings_page() {
             }
         }
         
-        @media only screen and (max-width: 479px) {
+        @media only screen and (max-width: 768px) {
             .svw-preview-widget {
                 left: 15px !important;
                 bottom: 15px !important;
