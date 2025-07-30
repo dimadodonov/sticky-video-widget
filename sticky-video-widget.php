@@ -292,7 +292,7 @@ function svw_render_settings_page() {
                 
                 <div class="svw-author-info">
                     <p><?php _e('Разработано', 'sticky-video-widget'); ?> <a href="https://mitroliti.com" target="_blank" style="color: #0073aa; text-decoration: none;"><strong>Mitroliti</strong></a></p>
-                    <p><a href="https://mitroliti.com/plugins" target="_blank" style="color: #0073aa; text-decoration: none;"><?php _e('Больше полезных плагинов', 'sticky-video-widget'); ?></a></p>
+                    <!-- <p><a href="https://mitroliti.com/plugins" target="_blank" style="color: #0073aa; text-decoration: none;"><//?php _e('Больше полезных плагинов', 'sticky-video-widget'); ?></a></p> -->
                 </div>
             </div>
         </div>
