@@ -293,10 +293,10 @@ function svw_render_settings_page() {
                     
                     <div class="svw-preview-controls">
                         <button type="button" id="svw-preview-demo" class="button button-secondary">
-                            <?php _e('� Открыть/Закрыть виджет', 'sticky-video-widget'); ?>
+                            <?php _e('🎬 Демо виджета', 'sticky-video-widget'); ?>
                         </button>
                         <button type="button" id="svw-preview-reset" class="button">
-                            <?php _e('🔄 Свернуть виджет', 'sticky-video-widget'); ?>
+                            <?php _e('🔄 Сбросить превью', 'sticky-video-widget'); ?>
                         </button>
                     </div>
                 </div>
@@ -377,11 +377,10 @@ function svw_render_settings_page() {
         // Слушатели изменений
         $('#svw_widget_enabled, #svw_widget_position, #svw_button_text, #svw_video_url').on('change input', updatePreview);
         
-        // Универсальная кнопка переключения состояния
-        $('#svw-preview-toggle').click(function() {
+        // Кнопка демо - переключает состояние виджета (открыть/закрыть)
+        $('#svw-preview-demo').click(function() {
             const widget = $('#svw-preview-widget');
             const videoElement = $('#svw-preview-video-element');
-            const toggleText = $('#svw-toggle-text');
             
             if (widget.hasClass('svw-preview-opened')) {
                 // Закрываем виджет
@@ -389,7 +388,6 @@ function svw_render_settings_page() {
                 if (videoElement[0] && videoElement[0].src) {
                     videoElement[0].muted = true;
                 }
-                toggleText.text('<?php _e('🎬 Открыть виджет', 'sticky-video-widget'); ?>');
             } else {
                 // Открываем виджет
                 widget.addClass('svw-preview-opened');
@@ -398,14 +396,33 @@ function svw_render_settings_page() {
                     videoElement[0].muted = false;
                     videoElement[0].play().catch(e => console.log('Preview play prevented:', e));
                 }
-                toggleText.text('<?php _e('🔄 Закрыть виджет', 'sticky-video-widget'); ?>');
             }
+        });
+        
+        // Кнопка сброса - сворачивает виджет и сбрасывает превью
+        $('#svw-preview-reset').click(function() {
+            const widget = $('#svw-preview-widget');
+            const videoElement = $('#svw-preview-video-element');
+            
+            // Закрываем виджет
+            widget.removeClass('svw-preview-opened');
+            if (videoElement[0] && videoElement[0].src) {
+                videoElement[0].muted = true;
+                videoElement[0].currentTime = 0;
+            }
+            
+            // Сбрасываем позицию к исходной
+            widget.removeClass('svw-pos-top-left svw-pos-top-right svw-pos-bottom-left svw-pos-bottom-right')
+                  .addClass('svw-pos-bottom-left');
+            
+            // Обновляем превью
+            updatePreview();
         });
         
         // Клик по превью виджета - работает как настоящий
         $('#svw-preview-widget .svw-preview-video').click(function(e) {
             e.preventDefault();
-            $('#svw-preview-toggle').click();
+            $('#svw-preview-demo').click();
         });
         
         // Кнопка закрытия в превью
