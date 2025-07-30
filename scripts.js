@@ -70,8 +70,8 @@ document.addEventListener("DOMContentLoaded", () => {
     widget.setAttribute("data-state", "default");
     
     // Останавливаем видео и сбрасываем время
-    video.pause();
-    video.currentTime = 0;
+    // video.pause();
+    // video.currentTime = 0;
     video.muted = true;
   }
 
