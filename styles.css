@@ -141,8 +141,8 @@
   text-align: center;
   transition: opacity 0.3s ease-in-out, background-color 0.2s ease-in-out,
     transform 0.2s ease-in-out;
-  opacity: 1;
-  visibility: visible;
+  opacity: 0;
+  visibility: hidden;
   background-color: rgb(253, 216, 42);
   font-size: 14px;
   font-family: Helvetica;
@@ -183,6 +183,7 @@
 
 .video-widget[data-state="opened"] .video-widget__button {
   opacity: 1;
+  visibility: visible;
 }
 
 @media only screen and (max-width: 1023px) {

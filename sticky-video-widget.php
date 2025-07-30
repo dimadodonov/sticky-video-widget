@@ -296,6 +296,9 @@ function svw_render_settings_page() {
                         <button type="button" id="svw-preview-reset" class="button">
                             <?php _e('🔄 Сбросить превью', 'sticky-video-widget'); ?>
                         </button>
+                        <button type="button" id="svw-clear-storage" class="button button-primary">
+                            <?php _e('🗑️ Сбросить localStorage', 'sticky-video-widget'); ?>
+                        </button>
                     </div>
                 </div>
                 
@@ -310,6 +313,8 @@ function svw_render_settings_page() {
                     </ol>
                     
                     <p><strong><?php _e('Совет:', 'sticky-video-widget'); ?></strong> <?php _e('Используйте короткие видео (до 30 секунд) для лучшего пользовательского опыта.', 'sticky-video-widget'); ?></p>
+                    
+                    <p><strong><?php _e('Важно:', 'sticky-video-widget'); ?></strong> <?php _e('Кнопка действия показывается только когда виджет раскрыт. При нажатии на ❌ виджет скрывается на 24 часа.', 'sticky-video-widget'); ?></p>
                 </div>
                 
                 <div class="svw-author-info">
@@ -376,6 +381,17 @@ function svw_render_settings_page() {
         // Сброс превью
         $('#svw-preview-reset').click(function() {
             $('#svw-preview-widget').removeClass('svw-preview-opened');
+        });
+        
+        // Сброс localStorage для виджета
+        $('#svw-clear-storage').click(function() {
+            if (confirm('<?php _e('Очистить сохранённое состояние закрытия виджета? Виджет снова будет показываться всем пользователям.', 'sticky-video-widget'); ?>')) {
+                // Очищаем localStorage для всех пользователей через JS
+                alert('<?php _e('Добавьте этот код в консоль браузера для очистки localStorage пользователей:\nlocalStorage.removeItem("svw_widget_closed");', 'sticky-video-widget'); ?>');
+                
+                // Для превью сбрасываем состояние
+                $('#svw-preview-widget').show().removeClass('svw-preview-opened');
+            }
         });
         
         // Инициализация
@@ -516,6 +532,14 @@ function svw_render_settings_page() {
             overflow: hidden;
             text-overflow: ellipsis;
             text-transform: uppercase;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        
+        .svw-preview-widget.svw-preview-opened .svw-preview-button {
+            opacity: 1;
+            visibility: visible;
         }
         
         .svw-preview-close {
