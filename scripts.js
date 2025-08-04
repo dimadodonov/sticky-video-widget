@@ -14,6 +14,49 @@ document.addEventListener("DOMContentLoaded", () => {
   const STORAGE_KEY = "svw_widget_closed";
   const STORAGE_DURATION = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
 
+  // Функция для отправки событий в Яндекс.Метрику
+  function sendYandexMetrikaEvent(eventId, callback = null) {
+    if (!eventId || eventId.trim() === "") {
+      if (callback) callback();
+      return;
+    }
+
+    // Проверяем наличие Яндекс.Метрики
+    if (typeof ym !== "undefined") {
+      // Получаем ID счетчика из настроек
+      const counterId =
+        typeof svwSettings !== "undefined" &&
+        svwSettings.yandex_metrika_counter_id
+          ? svwSettings.yandex_metrika_counter_id
+          : null;
+
+      if (counterId && counterId.trim() !== "") {
+        console.log(
+          "Sending Yandex Metrika event:",
+          eventId,
+          "Counter ID:",
+          counterId
+        );
+        ym(counterId, "reachGoal", eventId, {
+          callback: function () {
+            console.log("Yandex Metrika callback executed for:", eventId);
+            if (callback) callback();
+          },
+        });
+        // Fallback на случай если callback не сработает
+        setTimeout(() => {
+          if (callback) callback();
+        }, 1000);
+      } else {
+        console.log("Yandex Metrika Counter ID not configured");
+        if (callback) callback();
+      }
+    } else {
+      console.log("Yandex Metrika not found");
+      if (callback) callback();
+    }
+  }
+
   // Проверяем, был ли виджет закрыт ранее
   function isWidgetClosed() {
     const closedData = localStorage.getItem(STORAGE_KEY);
@@ -50,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
     video.pause();
     video.currentTime = 0;
     video.muted = true;
-    
+
     widget.style.display = "none";
     saveClosedState();
   }
@@ -60,6 +103,19 @@ document.addEventListener("DOMContentLoaded", () => {
     video.currentTime = 0;
     video.muted = false;
 
+    // Отправляем событие в Яндекс.Метрику при открытии виджета
+    if (
+      typeof svwSettings !== "undefined" &&
+      svwSettings.yandex_metrika_widget_open
+    ) {
+      sendYandexMetrikaEvent(
+        svwSettings.yandex_metrika_widget_open,
+        function () {
+          console.log("Widget opened event sent successfully");
+        }
+      );
+    }
+
     // Если видео не имеет автозапуска, запускаем его при открытии
     if (!hasAutoplay) {
       video.play().catch((e) => console.log("Autoplay prevented:", e));
@@ -68,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeWidget() {
     widget.setAttribute("data-state", "default");
-    
+
     // Останавливаем видео и сбрасываем время
     // video.pause();
     // video.currentTime = 0;
@@ -85,6 +141,52 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     e.stopPropagation();
     hideWidget(); // Полностью скрываем виджет и сохраняем в localStorage
+  });
+
+  // Обработчик клика по кнопке для отправки события в Яндекс.Метрику
+  button.addEventListener("click", (e) => {
+    // Предотвращаем стандартное поведение ссылки
+    e.preventDefault();
+
+    const buttonUrl = button.getAttribute("href");
+
+    // Отправляем событие в Яндекс.Метрику при клике на кнопку
+    if (
+      typeof svwSettings !== "undefined" &&
+      svwSettings.yandex_metrika_button_click
+    ) {
+      sendYandexMetrikaEvent(
+        svwSettings.yandex_metrika_button_click,
+        function () {
+          console.log("Button click event sent successfully");
+          // После успешной отправки события перенаправляем пользователя
+          if (buttonUrl) {
+            if (buttonUrl.startsWith("#")) {
+              // Если это якорь, плавно скроллим к элементу
+              const targetElement = document.querySelector(buttonUrl);
+              if (targetElement) {
+                targetElement.scrollIntoView({ behavior: "smooth" });
+              }
+            } else {
+              // Если это URL, переходим по ссылке
+              window.location.href = buttonUrl;
+            }
+          }
+        }
+      );
+    } else {
+      // Если событие не настроено, сразу переходим по ссылке
+      if (buttonUrl) {
+        if (buttonUrl.startsWith("#")) {
+          const targetElement = document.querySelector(buttonUrl);
+          if (targetElement) {
+            targetElement.scrollIntoView({ behavior: "smooth" });
+          }
+        } else {
+          window.location.href = buttonUrl;
+        }
+      }
+    }
   });
 
   container.addEventListener("click", (e) => {
@@ -142,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Показываем виджет и делаем его видимым
     widget.style.display = "block";
     widget.style.visibility = "visible";
-    
+
     // Плавное появление виджета
     setTimeout(() => {
       widget.style.opacity = "1";

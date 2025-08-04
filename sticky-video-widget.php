@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: Sticky Video Widget
-Description: Добавляет на сайт настраиваемый плавающий видео-виджет с возможностью выбора видео из медиатеки, настройкой позиции, текста кнопки и других параметров.
-Version: 1.1.0
+Description: Добавляет на сайт настраиваемый плавающий видео-виджет с возможностью выбора видео из медиатеки, настройкой позиции, текста кнопки и интеграцией с Яндекс.Метрикой.
+Version: 1.2.0
 Author: Mitroliti
 Author URI: https://mitroliti.com
 Plugin URI: https://mitroliti.com/plugins/sticky-video-widget
@@ -54,21 +54,24 @@ register_activation_hook(__FILE__, 'svw_activate_plugin');
 
 // Подключение скриптов/стилей
 function svw_enqueue_scripts($hook) {
-    wp_enqueue_style('svw_styles', plugin_dir_url(__FILE__) . 'styles.css', array(), '1.1.0');
+    wp_enqueue_style('svw_styles', plugin_dir_url(__FILE__) . 'styles.css', array(), '1.2.0');
     
     if (!is_admin()) {
-        wp_enqueue_script('svw_scripts', plugin_dir_url(__FILE__) . 'scripts.js', array(), '1.1.0', true);
+        wp_enqueue_script('svw_scripts', plugin_dir_url(__FILE__) . 'scripts.js', array(), '1.2.0', true);
         
         // Передаем настройки в JavaScript
         $settings = array(
-            'autoplay' => get_option('svw_autoplay', '1')
+            'autoplay' => get_option('svw_autoplay', '1'),
+            'yandex_metrika_counter_id' => get_option('svw_yandex_metrika_counter_id', ''),
+            'yandex_metrika_widget_open' => get_option('svw_yandex_metrika_widget_open', ''),
+            'yandex_metrika_button_click' => get_option('svw_yandex_metrika_button_click', '')
         );
         wp_localize_script('svw_scripts', 'svwSettings', $settings);
     }
 
     if ($hook === 'settings_page_sticky-video-widget') {
         wp_enqueue_media();
-        wp_enqueue_script('svw_admin_scripts', plugin_dir_url(__FILE__) . 'admin-scripts.js', array('jquery'), '1.1.0', true);
+        wp_enqueue_script('svw_admin_scripts', plugin_dir_url(__FILE__) . 'admin-scripts.js', array('jquery'), '1.2.0', true);
     }
 }
 add_action('admin_enqueue_scripts', 'svw_enqueue_scripts');
@@ -89,11 +92,21 @@ function svw_register_settings() {
     register_setting('svw_settings_group', 'svw_widget_enabled');
     register_setting('svw_settings_group', 'svw_show_on_mobile');
     register_setting('svw_settings_group', 'svw_autoplay');
+    register_setting('svw_settings_group', 'svw_yandex_metrika_counter_id');
+    register_setting('svw_settings_group', 'svw_yandex_metrika_widget_open');
+    register_setting('svw_settings_group', 'svw_yandex_metrika_button_click');
 
     add_settings_section(
         'svw_section_main',
         __('Основные настройки', 'sticky-video-widget'),
         null,
+        'sticky-video-widget'
+    );
+
+    add_settings_section(
+        'svw_section_yandex_metrika',
+        __('Настройки Яндекс.Метрики', 'sticky-video-widget'),
+        'svw_render_yandex_metrika_section',
         'sticky-video-widget'
     );
 
@@ -146,8 +159,49 @@ function svw_register_settings() {
         'sticky-video-widget',
         'svw_section_main'
     );
+
+    add_settings_field(
+        'svw_yandex_metrika_counter_id',
+        __('ID счетчика Яндекс.Метрики', 'sticky-video-widget'),
+        'svw_render_yandex_metrika_counter_id_field',
+        'sticky-video-widget',
+        'svw_section_yandex_metrika'
+    );
+
+    add_settings_field(
+        'svw_yandex_metrika_widget_open',
+        __('Идентификатор Яндекс.Метрики (открытие)', 'sticky-video-widget'),
+        'svw_render_yandex_metrika_widget_open_field',
+        'sticky-video-widget',
+        'svw_section_yandex_metrika'
+    );
+
+    add_settings_field(
+        'svw_yandex_metrika_button_click',
+        __('Идентификатор Яндекс.Метрики (клик по кнопке)', 'sticky-video-widget'),
+        'svw_render_yandex_metrika_button_click_field',
+        'sticky-video-widget',
+        'svw_section_yandex_metrika'
+    );
 }
 add_action('admin_init', 'svw_register_settings');
+
+// Описание секции Яндекс.Метрики
+function svw_render_yandex_metrika_section() {
+    ?>
+    <p><?php _e('Настройте отправку событий в Яндекс.Метрику для отслеживания взаимодействий с виджетом.', 'sticky-video-widget'); ?></p>
+    <p><strong><?php _e('Важно:', 'sticky-video-widget'); ?></strong> <?php _e('На вашем сайте должна быть установлена Яндекс.Метрика для корректной работы событий.', 'sticky-video-widget'); ?></p>
+    <?php
+}
+
+// Поле для ID счетчика Яндекс.Метрики
+function svw_render_yandex_metrika_counter_id_field() {
+    $value = get_option('svw_yandex_metrika_counter_id', '');
+    ?>
+    <input type="text" name="svw_yandex_metrika_counter_id" value="<?php echo esc_attr($value); ?>" placeholder="87971751" />
+    <p class="description"><?php _e('ID вашего счетчика Яндекс.Метрики. Например: 87971751', 'sticky-video-widget'); ?></p>
+    <?php
+}
 
 // Поле включения виджета
 function svw_render_enabled_field() {
@@ -210,6 +264,24 @@ function svw_render_autoplay_field() {
         <input type="checkbox" name="svw_autoplay" value="1" <?php checked($value, '1'); ?> />
         <?php _e('Автоматически запускать видео при загрузке страницы', 'sticky-video-widget'); ?>
     </label>
+    <?php
+}
+
+// Поле для идентификатора события открытия виджета
+function svw_render_yandex_metrika_widget_open_field() {
+    $value = get_option('svw_yandex_metrika_widget_open', '');
+    ?>
+    <input type="text" name="svw_yandex_metrika_widget_open" value="<?php echo esc_attr($value); ?>" placeholder="widget_open" />
+    <p class="description"><?php _e('Идентификатор события для отправки в Яндекс.Метрику при открытии виджета. Например: widget_open', 'sticky-video-widget'); ?></p>
+    <?php
+}
+
+// Поле для идентификатора события клика по кнопке
+function svw_render_yandex_metrika_button_click_field() {
+    $value = get_option('svw_yandex_metrika_button_click', '');
+    ?>
+    <input type="text" name="svw_yandex_metrika_button_click" value="<?php echo esc_attr($value); ?>" placeholder="button_click" />
+    <p class="description"><?php _e('Идентификатор события для отправки в Яндекс.Метрику при клике на кнопку виджета. Например: button_click', 'sticky-video-widget'); ?></p>
     <?php
 }
 
@@ -755,5 +827,8 @@ function svw_deactivate_plugin() {
     delete_option('svw_widget_enabled');
     delete_option('svw_show_on_mobile');
     delete_option('svw_autoplay');
+    delete_option('svw_yandex_metrika_counter_id');
+    delete_option('svw_yandex_metrika_widget_open');
+    delete_option('svw_yandex_metrika_button_click');
 }
 register_deactivation_hook(__FILE__, 'svw_deactivate_plugin');
