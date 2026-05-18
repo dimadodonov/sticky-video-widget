@@ -245,10 +245,15 @@ document.addEventListener("DOMContentLoaded", () => {
     widget.style.display = "block";
     widget.style.visibility = "visible";
 
-    // Плавное появление виджета
+    // Задержка появления: берём из настроек (секунды) + 500 мс на плавное появление
+    const delay =
+      typeof svwSettings !== "undefined" && svwSettings.appearance_delay
+        ? Math.max(0, parseInt(svwSettings.appearance_delay, 10)) * 1000
+        : 0;
+
     setTimeout(() => {
       widget.style.opacity = "1";
-    }, 500);
+    }, delay + 500);
   }
 
   // Запускаем инициализацию

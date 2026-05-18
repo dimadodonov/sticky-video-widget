@@ -2,7 +2,7 @@
 /*
 Plugin Name: Sticky Video Widget
 Description: Добавляет на сайт настраиваемый плавающий видео-виджет с возможностью выбора видео из медиатеки, настройкой позиции, текста кнопки и интеграцией с Яндекс.Метрикой.
-Version: 1.2.0
+Version: 1.3.0
 Author: Mitroliti
 Author URI: https://mitroliti.com
 Plugin URI: https://mitroliti.com/plugins/sticky-video-widget
@@ -54,24 +54,43 @@ register_activation_hook(__FILE__, 'svw_activate_plugin');
 
 // Подключение скриптов/стилей
 function svw_enqueue_scripts($hook) {
-    wp_enqueue_style('svw_styles', plugin_dir_url(__FILE__) . 'styles.css', array(), '1.2.0');
-    
+    wp_enqueue_style('svw_styles', plugin_dir_url(__FILE__) . 'styles.css', array(), '1.3.0');
+
     if (!is_admin()) {
-        wp_enqueue_script('svw_scripts', plugin_dir_url(__FILE__) . 'scripts.js', array(), '1.2.0', true);
-        
+        wp_enqueue_script('svw_scripts', plugin_dir_url(__FILE__) . 'scripts.js', array(), '1.3.0', true);
+
         // Передаем настройки в JavaScript
         $settings = array(
-            'autoplay' => get_option('svw_autoplay', '1'),
-            'yandex_metrika_counter_id' => get_option('svw_yandex_metrika_counter_id', ''),
-            'yandex_metrika_widget_open' => get_option('svw_yandex_metrika_widget_open', ''),
-            'yandex_metrika_button_click' => get_option('svw_yandex_metrika_button_click', '')
+            'autoplay'                    => get_option('svw_autoplay', '1'),
+            'appearance_delay'            => (int) get_option('svw_appearance_delay', '0'),
+            'yandex_metrika_counter_id'   => get_option('svw_yandex_metrika_counter_id', ''),
+            'yandex_metrika_widget_open'  => get_option('svw_yandex_metrika_widget_open', ''),
+            'yandex_metrika_button_click' => get_option('svw_yandex_metrika_button_click', ''),
         );
         wp_localize_script('svw_scripts', 'svwSettings', $settings);
     }
 
     if ($hook === 'settings_page_sticky-video-widget') {
         wp_enqueue_media();
-        wp_enqueue_script('svw_admin_scripts', plugin_dir_url(__FILE__) . 'admin-scripts.js', array('jquery'), '1.2.0', true);
+
+        // Select2 для выбора страниц в правилах отображения
+        if (!wp_script_is('select2', 'registered')) {
+            wp_register_style('select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css', array(), '4.1.0');
+            wp_register_script('select2', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', array('jquery'), '4.1.0', true);
+        }
+        wp_enqueue_style('select2');
+        wp_enqueue_script('select2');
+
+        wp_enqueue_script('svw_admin_scripts', plugin_dir_url(__FILE__) . 'admin-scripts.js', array('jquery', 'select2'), '1.3.0', true);
+        wp_localize_script('svw_admin_scripts', 'svwAdmin', array(
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'    => wp_create_nonce('svw_search_posts_nonce'),
+        ));
+    }
+
+    // Медиапикеры в редакторе записей/страниц (для meta box)
+    if (in_array($hook, array('post.php', 'post-new.php'))) {
+        wp_enqueue_script('svw_admin_scripts', plugin_dir_url(__FILE__) . 'admin-scripts.js', array('jquery'), '1.3.0', true);
     }
 }
 add_action('admin_enqueue_scripts', 'svw_enqueue_scripts');
@@ -95,6 +114,11 @@ function svw_register_settings() {
     register_setting('svw_settings_group', 'svw_yandex_metrika_counter_id');
     register_setting('svw_settings_group', 'svw_yandex_metrika_widget_open');
     register_setting('svw_settings_group', 'svw_yandex_metrika_button_click');
+    register_setting('svw_settings_group', 'svw_video_poster', array('sanitize_callback' => 'esc_url_raw'));
+    register_setting('svw_settings_group', 'svw_appearance_delay', array('sanitize_callback' => 'absint'));
+    register_setting('svw_settings_group', 'svw_display_mode', array('sanitize_callback' => 'sanitize_text_field'));
+    register_setting('svw_settings_group', 'svw_display_pages', array('sanitize_callback' => 'svw_sanitize_ids_array'));
+    register_setting('svw_settings_group', 'svw_display_post_types', array('sanitize_callback' => 'svw_sanitize_post_types_array'));
 
     add_settings_section(
         'svw_section_main',
@@ -110,6 +134,13 @@ function svw_register_settings() {
         'sticky-video-widget'
     );
 
+    add_settings_section(
+        'svw_section_display_rules',
+        __('Правила отображения', 'sticky-video-widget'),
+        'svw_render_display_rules_section',
+        'sticky-video-widget'
+    );
+
     add_settings_field(
         'svw_widget_enabled',
         __('Включить виджет', 'sticky-video-widget'),
@@ -122,6 +153,14 @@ function svw_register_settings() {
         'svw_video_url',
         __('URL видео из медиатеки', 'sticky-video-widget'),
         'svw_render_video_field',
+        'sticky-video-widget',
+        'svw_section_main'
+    );
+
+    add_settings_field(
+        'svw_video_poster',
+        __('Постер видео', 'sticky-video-widget'),
+        'svw_render_poster_field',
         'sticky-video-widget',
         'svw_section_main'
     );
@@ -161,6 +200,14 @@ function svw_register_settings() {
     );
 
     add_settings_field(
+        'svw_appearance_delay',
+        __('Задержка появления', 'sticky-video-widget'),
+        'svw_render_appearance_delay_field',
+        'sticky-video-widget',
+        'svw_section_main'
+    );
+
+    add_settings_field(
         'svw_yandex_metrika_counter_id',
         __('ID счетчика Яндекс.Метрики', 'sticky-video-widget'),
         'svw_render_yandex_metrika_counter_id_field',
@@ -182,6 +229,30 @@ function svw_register_settings() {
         'svw_render_yandex_metrika_button_click_field',
         'sticky-video-widget',
         'svw_section_yandex_metrika'
+    );
+
+    add_settings_field(
+        'svw_display_mode',
+        __('Режим отображения', 'sticky-video-widget'),
+        'svw_render_display_mode_field',
+        'sticky-video-widget',
+        'svw_section_display_rules'
+    );
+
+    add_settings_field(
+        'svw_display_pages',
+        __('Выбор страниц', 'sticky-video-widget'),
+        'svw_render_display_pages_field',
+        'sticky-video-widget',
+        'svw_section_display_rules'
+    );
+
+    add_settings_field(
+        'svw_display_post_types',
+        __('Типы записей', 'sticky-video-widget'),
+        'svw_render_display_post_types_field',
+        'sticky-video-widget',
+        'svw_section_display_rules'
     );
 }
 add_action('admin_init', 'svw_register_settings');
@@ -282,6 +353,133 @@ function svw_render_yandex_metrika_button_click_field() {
     ?>
     <input type="text" name="svw_yandex_metrika_button_click" value="<?php echo esc_attr($value); ?>" placeholder="button_click" />
     <p class="description"><?php _e('Идентификатор события для отправки в Яндекс.Метрику при клике на кнопку виджета. Например: button_click', 'sticky-video-widget'); ?></p>
+    <?php
+}
+
+// Вспомогательные функции санитизации для массивов
+function svw_sanitize_ids_array($input) {
+    if (empty($input) || !is_array($input)) {
+        return array();
+    }
+    return array_values(array_map('absint', array_filter($input)));
+}
+
+function svw_sanitize_post_types_array($input) {
+    if (empty($input) || !is_array($input)) {
+        return array();
+    }
+    $allowed = array_keys(get_post_types(array('public' => true)));
+    return array_values(array_intersect(array_map('sanitize_key', $input), $allowed));
+}
+
+// Секция правил отображения
+function svw_render_display_rules_section() {
+    ?>
+    <p><?php _e('Настройте, на каких страницах виджет должен отображаться. Правила по типам записей и конкретным страницам работают по принципу ИЛИ.', 'sticky-video-widget'); ?></p>
+    <p><?php _e('Для точечного переопределения (другое видео или отключение виджета) используйте блок «Sticky Video Widget» в редакторе каждой страницы.', 'sticky-video-widget'); ?></p>
+    <?php
+}
+
+// Поле режима отображения (all / include / exclude)
+function svw_render_display_mode_field() {
+    $value = get_option('svw_display_mode', 'all');
+    ?>
+    <fieldset>
+        <label style="display:block;margin-bottom:6px;">
+            <input type="radio" name="svw_display_mode" value="all" <?php checked($value, 'all'); ?> />
+            <?php _e('Показывать на всех страницах', 'sticky-video-widget'); ?>
+        </label>
+        <label style="display:block;margin-bottom:6px;">
+            <input type="radio" name="svw_display_mode" value="include" <?php checked($value, 'include'); ?> />
+            <?php _e('Показывать только на выбранных страницах / типах', 'sticky-video-widget'); ?>
+        </label>
+        <label style="display:block;">
+            <input type="radio" name="svw_display_mode" value="exclude" <?php checked($value, 'exclude'); ?> />
+            <?php _e('Скрывать на выбранных страницах / типах', 'sticky-video-widget'); ?>
+        </label>
+    </fieldset>
+    <?php
+}
+
+// Поле выбора страниц (Select2 + AJAX)
+function svw_render_display_pages_field() {
+    $ids = get_option('svw_display_pages', array());
+    if (!is_array($ids)) {
+        $ids = array();
+    }
+    ?>
+    <select id="svw_display_pages" name="svw_display_pages[]" multiple="multiple" style="width: 400px; min-height: 38px;">
+        <?php
+        foreach ($ids as $post_id) {
+            $post_id = absint($post_id);
+            $post = get_post($post_id);
+            if ($post) {
+                printf(
+                    '<option value="%d" selected="selected">%s (ID: %d)</option>',
+                    $post->ID,
+                    esc_html($post->post_title),
+                    $post->ID
+                );
+            }
+        }
+        ?>
+    </select>
+    <p class="description"><?php _e('Начните вводить название страницы или записи (мин. 1 символ). Поддерживается выбор нескольких страниц.', 'sticky-video-widget'); ?></p>
+    <?php
+}
+
+// Поле выбора типов записей
+function svw_render_display_post_types_field() {
+    $saved = get_option('svw_display_post_types', array());
+    if (!is_array($saved)) {
+        $saved = array();
+    }
+    $post_types = get_post_types(array('public' => true), 'objects');
+    foreach ($post_types as $post_type) {
+        ?>
+        <label style="display:block;margin-bottom:5px;">
+            <input type="checkbox"
+                   name="svw_display_post_types[]"
+                   value="<?php echo esc_attr($post_type->name); ?>"
+                   <?php checked(in_array($post_type->name, $saved, true)); ?> />
+            <?php echo esc_html($post_type->label); ?> <code><?php echo esc_html($post_type->name); ?></code>
+        </label>
+        <?php
+    }
+    ?>
+    <p class="description"><?php _e('Оставьте пустым — применять ко всем типам. Работает совместно с выбором конкретных страниц.', 'sticky-video-widget'); ?></p>
+    <?php
+}
+
+// Поле постера видео (глобальный)
+function svw_render_poster_field() {
+    $value = get_option('svw_video_poster', '');
+    ?>
+    <input type="text" id="svw_video_poster" name="svw_video_poster"
+           value="<?php echo esc_attr($value); ?>"
+           style="width: 400px;" placeholder="https://" />
+    <button type="button" id="svw_select_poster_button" class="button"><?php _e('Выбрать постер', 'sticky-video-widget'); ?></button>
+    <button type="button" id="svw_clear_poster_button" class="button"><?php _e('Очистить', 'sticky-video-widget'); ?></button>
+    <?php if ($value) : ?>
+    <br><img id="svw_poster_preview" src="<?php echo esc_url($value); ?>"
+             style="max-width:120px;max-height:70px;margin-top:8px;border-radius:4px;display:block;" />
+    <?php else : ?>
+    <img id="svw_poster_preview" src=""
+         style="max-width:120px;max-height:70px;margin-top:8px;border-radius:4px;display:none;" />
+    <?php endif; ?>
+    <p class="description"><?php _e('Изображение, которое отображается пока видео не загрузилось. Рекомендуется: первый кадр вашего видео.', 'sticky-video-widget'); ?></p>
+    <?php
+}
+
+// Поле задержки появления виджета
+function svw_render_appearance_delay_field() {
+    $value = (int) get_option('svw_appearance_delay', '0');
+    ?>
+    <input type="number" name="svw_appearance_delay"
+           value="<?php echo esc_attr($value); ?>"
+           min="0" max="60" step="1" style="width: 80px;" />
+    <span> <?php _e('секунд', 'sticky-video-widget'); ?></span>
+    <p class="description"><?php _e('Задержка перед появлением виджета (0–60 сек). 0 — виджет появляется сразу после загрузки страницы.', 'sticky-video-widget'); ?></p>
     <?php
 }
 
@@ -773,40 +971,225 @@ function svw_render_settings_page() {
     <?php
 }
 
+// Проверка правил отображения виджета
+function svw_should_display_widget() {
+    $mode = get_option('svw_display_mode', 'all');
+
+    if ($mode === 'all') {
+        return true;
+    }
+
+    $current_id   = (int) get_the_ID();
+    $current_type = (string) get_post_type();
+
+    $page_ids = get_option('svw_display_pages', array());
+    if (!is_array($page_ids)) {
+        $page_ids = array();
+    }
+    $page_ids = array_map('absint', array_filter($page_ids));
+
+    $post_types = get_option('svw_display_post_types', array());
+    if (!is_array($post_types)) {
+        $post_types = array();
+    }
+    $post_types = array_map('sanitize_key', array_filter($post_types));
+
+    $id_matches   = !empty($page_ids) && in_array($current_id, $page_ids, true);
+    $type_matches = !empty($post_types) && in_array($current_type, $post_types, true);
+    $any_match    = $id_matches || $type_matches;
+
+    if ($mode === 'include') {
+        // Если правила не заданы — не показывать нигде
+        if (empty($page_ids) && empty($post_types)) {
+            return false;
+        }
+        return $any_match;
+    }
+
+    if ($mode === 'exclude') {
+        // Если правила не заданы — показывать везде
+        if (empty($page_ids) && empty($post_types)) {
+            return true;
+        }
+        return !$any_match;
+    }
+
+    return true;
+}
+
+// AJAX: поиск страниц/записей для Select2
+function svw_search_posts_ajax() {
+    check_ajax_referer('svw_search_posts_nonce', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_die('', '', array('response' => 403));
+    }
+
+    $search = sanitize_text_field(isset($_GET['q']) ? $_GET['q'] : '');
+
+    $query = new WP_Query(array(
+        'post_type'      => 'any',
+        'post_status'    => 'publish',
+        's'              => $search,
+        'posts_per_page' => 20,
+        'orderby'        => 'relevance',
+        'no_found_rows'  => true,
+    ));
+
+    $results = array();
+    foreach ($query->posts as $post) {
+        $results[] = array(
+            'id'   => $post->ID,
+            'text' => $post->post_title . ' (' . $post->post_type . ') #' . $post->ID,
+        );
+    }
+
+    wp_send_json(array('results' => $results));
+}
+add_action('wp_ajax_svw_search_posts', 'svw_search_posts_ajax');
+
+// Meta box: регистрация
+function svw_add_meta_box() {
+    add_meta_box(
+        'svw_meta_box',
+        __('Sticky Video Widget', 'sticky-video-widget'),
+        'svw_render_meta_box',
+        array('post', 'page'),
+        'side',
+        'default'
+    );
+}
+add_action('add_meta_boxes', 'svw_add_meta_box');
+
+// Meta box: рендер
+function svw_render_meta_box($post) {
+    wp_nonce_field('svw_meta_box_nonce', 'svw_meta_box_nonce_field');
+
+    $video_url      = get_post_meta($post->ID, '_svw_video_url', true);
+    $video_poster   = get_post_meta($post->ID, '_svw_video_poster', true);
+    $disable_widget = get_post_meta($post->ID, '_svw_disable_widget', true);
+    ?>
+    <p>
+        <label for="svw_meta_video_url"><strong><?php _e('Видео для этой страницы', 'sticky-video-widget'); ?></strong></label>
+        <br>
+        <input type="text" id="svw_meta_video_url" name="svw_meta_video_url"
+               value="<?php echo esc_attr($video_url); ?>"
+               placeholder="<?php esc_attr_e('Оставьте пустым — глобальное видео', 'sticky-video-widget'); ?>"
+               style="width:100%;margin-top:4px;" />
+        <span style="display:flex;gap:4px;margin-top:4px;">
+            <button type="button" class="button button-small svw-meta-select-video"><?php _e('Выбрать', 'sticky-video-widget'); ?></button>
+            <button type="button" class="button button-small svw-meta-clear-video"><?php _e('Очистить', 'sticky-video-widget'); ?></button>
+        </span>
+    </p>
+    <p>
+        <label for="svw_meta_video_poster"><strong><?php _e('Постер видео', 'sticky-video-widget'); ?></strong></label>
+        <br>
+        <input type="text" id="svw_meta_video_poster" name="svw_meta_video_poster"
+               value="<?php echo esc_attr($video_poster); ?>"
+               placeholder="<?php esc_attr_e('Оставьте пустым — глобальный постер', 'sticky-video-widget'); ?>"
+               style="width:100%;margin-top:4px;" />
+        <span style="display:flex;gap:4px;margin-top:4px;">
+            <button type="button" class="button button-small svw-meta-select-poster"><?php _e('Выбрать', 'sticky-video-widget'); ?></button>
+            <button type="button" class="button button-small svw-meta-clear-poster"><?php _e('Очистить', 'sticky-video-widget'); ?></button>
+        </span>
+        <img id="svw_meta_poster_preview"
+             src="<?php echo esc_url($video_poster); ?>"
+             style="max-width:100%;max-height:60px;margin-top:6px;border-radius:4px;<?php echo $video_poster ? '' : 'display:none;'; ?>" />
+    </p>
+    <hr>
+    <p>
+        <label>
+            <input type="checkbox" name="svw_meta_disable_widget" value="1" <?php checked($disable_widget, '1'); ?> />
+            <strong><?php _e('Отключить виджет на этой странице', 'sticky-video-widget'); ?></strong>
+        </label>
+    </p>
+    <?php
+}
+
+// Meta box: сохранение
+function svw_save_meta_box($post_id) {
+    if (!isset($_POST['svw_meta_box_nonce_field']) ||
+        !wp_verify_nonce($_POST['svw_meta_box_nonce_field'], 'svw_meta_box_nonce')) {
+        return;
+    }
+
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        return;
+    }
+
+    if (!current_user_can('edit_post', $post_id)) {
+        return;
+    }
+
+    $video_url = isset($_POST['svw_meta_video_url']) ? esc_url_raw(trim($_POST['svw_meta_video_url'])) : '';
+    update_post_meta($post_id, '_svw_video_url', $video_url);
+
+    $video_poster = isset($_POST['svw_meta_video_poster']) ? esc_url_raw(trim($_POST['svw_meta_video_poster'])) : '';
+    update_post_meta($post_id, '_svw_video_poster', $video_poster);
+
+    $disable_widget = isset($_POST['svw_meta_disable_widget']) ? '1' : '';
+    update_post_meta($post_id, '_svw_disable_widget', $disable_widget);
+}
+add_action('save_post', 'svw_save_meta_box');
+
 // Вывод виджета во фронте
 function svw_render_frontend_widget() {
-    // Проверяем, включен ли виджет
+    // Проверяем, включён ли виджет глобально
     if (!get_option('svw_widget_enabled', '1')) {
         return;
     }
 
-    $video_url = esc_url(get_option('svw_video_url'));
+    // Проверяем правила отображения (include / exclude / all)
+    if (!svw_should_display_widget()) {
+        return;
+    }
+
+    // Настройки конкретной страницы из meta box
+    $post_id = get_the_ID();
+    if ($post_id) {
+        // Виджет явно отключён на этой странице
+        if (get_post_meta($post_id, '_svw_disable_widget', true) === '1') {
+            return;
+        }
+
+        // Видео: страничное (meta) > глобальное (option)
+        $page_video = get_post_meta($post_id, '_svw_video_url', true);
+        $video_url  = esc_url($page_video ?: get_option('svw_video_url'));
+
+        // Постер: страничный (meta) > глобальный (option)
+        $page_poster = get_post_meta($post_id, '_svw_video_poster', true);
+        $poster_url  = esc_url($page_poster ?: get_option('svw_video_poster', ''));
+    } else {
+        $video_url  = esc_url(get_option('svw_video_url'));
+        $poster_url = esc_url(get_option('svw_video_poster', ''));
+    }
+
     if (!$video_url) {
         return;
     }
 
     // Получаем настройки
-    $button_text = get_option('svw_button_text', 'Получить КП');
-    $button_link = get_option('svw_button_link', '#section-price');
+    $button_text    = get_option('svw_button_text', 'Получить КП');
+    $button_link    = get_option('svw_button_link', '#section-price');
     $show_on_mobile = get_option('svw_show_on_mobile', '1');
-    $autoplay = get_option('svw_autoplay', '1');
+    $autoplay       = get_option('svw_autoplay', '1');
 
     // CSS класс для мобильных устройств
     $mobile_class = $show_on_mobile ? '' : 'svw-hide-mobile';
-    
     ?>
     <div class="video-widget <?php echo esc_attr($mobile_class); ?>" data-state="default">
         <div class="video-widget__container">
-            <video id="video-widget__video" 
-                   loop 
-                   <?php echo $autoplay ? 'autoplay' : ''; ?> 
-                   playsinline 
-                   preload="auto" 
-                   muted 
-                   controlslist="nodownload" 
-                   disablepictureinpicture 
-                   class="video-widget__video" 
-                   src="<?php echo $video_url; ?>">
+            <video id="video-widget__video"
+                   loop
+                   <?php echo $autoplay ? 'autoplay' : ''; ?>
+                   playsinline
+                   preload="auto"
+                   muted
+                   controlslist="nodownload"
+                   disablepictureinpicture
+                   class="video-widget__video"
+                   src="<?php echo $video_url; ?>"
+                   <?php if ($poster_url) : ?>poster="<?php echo esc_attr($poster_url); ?>"<?php endif; ?>>
             </video>
             <button class="video-widget__close" aria-label="<?php esc_attr_e('Закрыть видео', 'sticky-video-widget'); ?>"></button>
             <a class="video-widget__button" href="<?php echo esc_url($button_link); ?>">
@@ -830,5 +1213,12 @@ function svw_deactivate_plugin() {
     delete_option('svw_yandex_metrika_counter_id');
     delete_option('svw_yandex_metrika_widget_open');
     delete_option('svw_yandex_metrika_button_click');
+
+    // v1.3.0
+    delete_option('svw_video_poster');
+    delete_option('svw_appearance_delay');
+    delete_option('svw_display_mode');
+    delete_option('svw_display_pages');
+    delete_option('svw_display_post_types');
 }
 register_deactivation_hook(__FILE__, 'svw_deactivate_plugin');
