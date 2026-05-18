@@ -1,5 +1,4 @@
 jQuery(document).ready(function ($) {
-
   // ====================================================
   // Settings Page — Video media picker
   // ====================================================
@@ -58,7 +57,11 @@ jQuery(document).ready(function ($) {
         multiple: false,
       });
       poster_frame.on("select", function () {
-        const attachment = poster_frame.state().get("selection").first().toJSON();
+        const attachment = poster_frame
+          .state()
+          .get("selection")
+          .first()
+          .toJSON();
         $("#svw_video_poster").val(attachment.url);
         $("#svw_poster_preview").attr("src", attachment.url).show();
       });
@@ -101,7 +104,9 @@ jQuery(document).ready(function ($) {
     function toggleDisplayRulesFields() {
       const mode = $("input[name='svw_display_mode']:checked").val();
       const pagesRow = $("#svw_display_pages").closest("tr");
-      const typesRow = $("input[name='svw_display_post_types[]']").first().closest("tr");
+      const typesRow = $("input[name='svw_display_post_types[]']")
+        .first()
+        .closest("tr");
 
       if (mode === "all") {
         pagesRow.hide();
@@ -137,7 +142,11 @@ jQuery(document).ready(function ($) {
         multiple: false,
       });
       meta_video_frame.on("select", function () {
-        const attachment = meta_video_frame.state().get("selection").first().toJSON();
+        const attachment = meta_video_frame
+          .state()
+          .get("selection")
+          .first()
+          .toJSON();
         $("#svw_meta_video_url").val(attachment.url);
       });
       meta_video_frame.open();
@@ -160,7 +169,11 @@ jQuery(document).ready(function ($) {
         multiple: false,
       });
       meta_poster_frame.on("select", function () {
-        const attachment = meta_poster_frame.state().get("selection").first().toJSON();
+        const attachment = meta_poster_frame
+          .state()
+          .get("selection")
+          .first()
+          .toJSON();
         $("#svw_meta_video_poster").val(attachment.url);
         $("#svw_meta_poster_preview").attr("src", attachment.url).show();
       });

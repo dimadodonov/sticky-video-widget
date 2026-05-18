@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "Sending Yandex Metrika event:",
           eventId,
           "Counter ID:",
-          counterId
+          counterId,
         );
         ym(counterId, "reachGoal", eventId, {
           callback: function () {
@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         svwSettings.yandex_metrika_widget_open,
         function () {
           console.log("Widget opened event sent successfully");
-        }
+        },
       );
     }
 
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
               window.location.href = buttonUrl;
             }
           }
-        }
+        },
       );
     } else {
       // Если событие не настроено, сразу переходим по ссылке
