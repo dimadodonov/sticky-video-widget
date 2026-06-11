@@ -149,43 +149,46 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
 
     const buttonUrl = button.getAttribute("href");
+    const triggerSelector =
+      typeof svwSettings !== "undefined" &&
+      svwSettings.button_trigger_selector
+        ? svwSettings.button_trigger_selector.trim()
+        : "";
+
+    // Вспомогательная функция: выполнить действие после Метрики (или сразу)
+    function doAction() {
+      if (triggerSelector) {
+        // Свернуть виджет и кликнуть по попап-триггеру
+        closeWidget();
+        const triggerEl = document.querySelector(triggerSelector);
+        if (triggerEl) {
+          triggerEl.click();
+        }
+      } else if (buttonUrl) {
+        if (buttonUrl.startsWith("#")) {
+          // Если это якорь, плавно скроллим к элементу
+          const targetElement = document.querySelector(buttonUrl);
+          if (targetElement) {
+            targetElement.scrollIntoView({ behavior: "smooth" });
+          }
+        } else {
+          // Если это URL, переходим по ссылке
+          window.location.href = buttonUrl;
+        }
+      }
+    }
 
     // Отправляем событие в Яндекс.Метрику при клике на кнопку
     if (
       typeof svwSettings !== "undefined" &&
       svwSettings.yandex_metrika_button_click
     ) {
-      sendYandexMetrikaEvent(
-        svwSettings.yandex_metrika_button_click,
-        function () {
-          console.log("Button click event sent successfully");
-          // После успешной отправки события перенаправляем пользователя
-          if (buttonUrl) {
-            if (buttonUrl.startsWith("#")) {
-              // Если это якорь, плавно скроллим к элементу
-              const targetElement = document.querySelector(buttonUrl);
-              if (targetElement) {
-                targetElement.scrollIntoView({ behavior: "smooth" });
-              }
-            } else {
-              // Если это URL, переходим по ссылке
-              window.location.href = buttonUrl;
-            }
-          }
-        },
-      );
+      sendYandexMetrikaEvent(svwSettings.yandex_metrika_button_click, function () {
+        console.log("Button click event sent successfully");
+        doAction();
+      });
     } else {
-      // Если событие не настроено, сразу переходим по ссылке
-      if (buttonUrl) {
-        if (buttonUrl.startsWith("#")) {
-          const targetElement = document.querySelector(buttonUrl);
-          if (targetElement) {
-            targetElement.scrollIntoView({ behavior: "smooth" });
-          }
-        } else {
-          window.location.href = buttonUrl;
-        }
-      }
+      doAction();
     }
   });
 

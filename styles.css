@@ -4,8 +4,9 @@
   left: 0;
   bottom: 0;
   z-index: 999999;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, sans-serif;
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
 }
@@ -27,8 +28,21 @@
   font-family: Helvetica;
   -webkit-tap-highlight-color: transparent;
   background: #eee;
-  -webkit-transition: width 0.3s ease-in-out, height 0.3s ease-in-out, bottom 0.3s ease-in-out, border-color 0.2s ease-in-out, opacity 1s ease-in-out, -webkit-transform 0.2s ease-in-out;
-  transition: transform 0.2s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out, bottom 0.3s ease-in-out, border-color 0.2s ease-in-out, opacity 1s ease-in-out, -webkit-transform 0.2s ease-in-out;
+  -webkit-transition:
+    width 0.3s ease-in-out,
+    height 0.3s ease-in-out,
+    bottom 0.3s ease-in-out,
+    border-color 0.2s ease-in-out,
+    opacity 1s ease-in-out,
+    -webkit-transform 0.2s ease-in-out;
+  transition:
+    transform 0.2s ease-in-out,
+    width 0.3s ease-in-out,
+    height 0.3s ease-in-out,
+    bottom 0.3s ease-in-out,
+    border-color 0.2s ease-in-out,
+    opacity 1s ease-in-out,
+    -webkit-transform 0.2s ease-in-out;
   cursor: pointer;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -71,8 +85,13 @@
   width: 20px;
   height: 20px;
   opacity: 0;
-  -webkit-transition: opacity 0.2s ease-in-out, -webkit-transform 0.3s ease-in-out;
-  transition: transform 0.3s ease-in-out, opacity 0.2s ease-in-out, -webkit-transform 0.3s ease-in-out;
+  -webkit-transition:
+    opacity 0.2s ease-in-out,
+    -webkit-transform 0.3s ease-in-out;
+  transition:
+    transform 0.3s ease-in-out,
+    opacity 0.2s ease-in-out,
+    -webkit-transform 0.3s ease-in-out;
   background: none;
   border: none;
   cursor: pointer;
@@ -115,27 +134,34 @@
   z-index: 300;
   vertical-align: middle;
   border-radius: 10px;
-  height: 65px;
+  height: 45px;
   -webkit-box-shadow: rgba(0, 0, 0, 0.25) 0 4px 15px;
   box-shadow: rgba(0, 0, 0, 0.25) 0 4px 15px;
   font-family: Helvetica;
   font-size: 14px;
-  line-height: 65px;
+  line-height: 45px;
+  font-weight: bold;
   text-align: center;
   text-transform: uppercase;
-  color: #000;
-  background-color: #fdd82a;
+  color: #fff;
+  background: linear-gradient(45deg, #c40714 0, #f74d58 100%);
   opacity: 0;
   visibility: hidden;
-  -webkit-transition: opacity 0.3s ease-in-out, background-color 0.2s ease-in-out, -webkit-transform 0.2s ease-in-out;
-  transition: transform 0.2s ease-in-out, opacity 0.3s ease-in-out, background-color 0.2s ease-in-out, -webkit-transform 0.2s ease-in-out;
+  -webkit-transition:
+    opacity 0.3s ease-in-out,
+    background-color 0.2s ease-in-out,
+    -webkit-transform 0.2s ease-in-out;
+  transition:
+    transform 0.2s ease-in-out,
+    opacity 0.3s ease-in-out,
+    background-color 0.2s ease-in-out,
+    -webkit-transform 0.2s ease-in-out;
   text-decoration: none;
   display: block;
 }
 
 .video-widget__button:hover {
   text-decoration: none;
-  background-color: #ffe257;
 }
 
 .video-widget[data-state="opened"] .video-widget__container {
@@ -186,7 +212,7 @@
     width: 90px;
     height: 125px;
   }
-  
+
   /* Развернутое состояние на мобильных - как у конкурентов */
   .video-widget[data-state="opened"] .video-widget__container {
     width: 280px;

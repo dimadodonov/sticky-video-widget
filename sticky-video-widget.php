@@ -63,6 +63,7 @@ function svw_enqueue_scripts($hook) {
         $settings = array(
             'autoplay'                    => get_option('svw_autoplay', '1'),
             'appearance_delay'            => (int) get_option('svw_appearance_delay', '0'),
+            'button_trigger_selector'     => get_option('svw_button_trigger_selector', ''),
             'yandex_metrika_counter_id'   => get_option('svw_yandex_metrika_counter_id', ''),
             'yandex_metrika_widget_open'  => get_option('svw_yandex_metrika_widget_open', ''),
             'yandex_metrika_button_click' => get_option('svw_yandex_metrika_button_click', ''),
@@ -107,6 +108,7 @@ function svw_register_settings() {
     register_setting('svw_settings_group', 'svw_video_url');
     register_setting('svw_settings_group', 'svw_button_text');
     register_setting('svw_settings_group', 'svw_button_link');
+    register_setting('svw_settings_group', 'svw_button_trigger_selector', array('sanitize_callback' => 'sanitize_text_field'));
 
     register_setting('svw_settings_group', 'svw_widget_enabled');
     register_setting('svw_settings_group', 'svw_show_on_mobile');
@@ -179,6 +181,14 @@ function svw_register_settings() {
         'svw_button_link',
         __('Ссылка кнопки', 'sticky-video-widget'),
         'svw_render_button_link_field',
+        'sticky-video-widget',
+        'svw_section_main'
+    );
+
+    add_settings_field(
+        'svw_button_trigger_selector',
+        __('Селектор для открытия попапа', 'sticky-video-widget'),
+        'svw_render_button_trigger_selector_field',
         'sticky-video-widget',
         'svw_section_main'
     );
@@ -312,7 +322,23 @@ function svw_render_button_link_field() {
     $value = get_option('svw_button_link', '#section-price');
     ?>
     <input type="url" name="svw_button_link" value="<?php echo esc_attr($value); ?>" style="width: 400px;" />
-    <p class="description"><?php _e('URL или якорь (#section-name), куда будет вести кнопка', 'sticky-video-widget'); ?></p>
+    <p class="description"><?php _e('URL или якорь (#section-name), куда будет вести кнопка. Игнорируется, если задан «Селектор для открытия попапа» ниже.', 'sticky-video-widget'); ?></p>
+    <?php
+}
+
+// Поле CSS-селектора для попапа
+function svw_render_button_trigger_selector_field() {
+    $value = get_option('svw_button_trigger_selector', '');
+    ?>
+    <input type="text" id="svw_button_trigger_selector" name="svw_button_trigger_selector"
+           value="<?php echo esc_attr($value); ?>"
+           placeholder=".btn_modal_callback"
+           style="width: 400px;" />
+    <p class="description">
+        <?php _e('CSS-селектор элемента на странице, который нужно кликнуть для открытия попап-окна. Например:', 'sticky-video-widget'); ?>
+        <code>.btn_modal_callback</code> <?php _e('или', 'sticky-video-widget'); ?> <code>#open-modal</code>.<br>
+        <?php _e('Если поле заполнено — при клике на кнопку виджет свернётся и откроется попап. Поле «Ссылка кнопки» при этом игнорируется.', 'sticky-video-widget'); ?>
+    </p>
     <?php
 }
 
@@ -1220,5 +1246,6 @@ function svw_deactivate_plugin() {
     delete_option('svw_display_mode');
     delete_option('svw_display_pages');
     delete_option('svw_display_post_types');
+    delete_option('svw_button_trigger_selector');
 }
 register_deactivation_hook(__FILE__, 'svw_deactivate_plugin');
